@@ -7,26 +7,31 @@ import (
 
 type CommandFunction func([]string) error
 
-type Command struct {
-	Cmd    string
-	SubCmd map[string]*Command
-	CmdFn  CommandFunction
+type CommandSpec struct {
+	Fn   CommandFunction
+	Args []string
 }
 
-type CommandSpec struct {
-	CmdFn    CommandFunction
+type CommandNode struct {
+	Cmd     string
+	SubCmd  map[string]*CommandNode
+	CmdSpec CommandSpec
+}
+
+type CommandLineSpec struct {
+	Spec     CommandSpec
 	Sentence []string
 }
 
-var commands = []CommandSpec{
-	{CmdFn: listAccountsCmd, Sentence: []string{"list", "accounts"}},
-	{CmdFn: listAnAccountCmd, Sentence: []string{"list", "account"}},
-	{CmdFn: AddAccountCmnd, Sentence: []string{"add", "account"}},
+var commands = []CommandLineSpec{
+	{Spec: listAccountsSpec, Sentence: []string{"list", "accounts"}},
+	{Spec: listAnAccountSpec, Sentence: []string{"list", "account"}},
+	{Spec: addAccountSpec, Sentence: []string{"add", "account"}},
 }
 
-func buildCommandTree() (*Command, error) {
+func buildCommandTree() (*CommandNode, error) {
 	log.Println("buildCommandTree Called")
-	root := &Command{Cmd: "Root"}
+	root := &CommandNode{Cmd: "Root"}
 
 	for i, c := range commands {
 		newCmd := root
@@ -36,20 +41,20 @@ func buildCommandTree() (*Command, error) {
 		for _, s := range c.Sentence {
 			log.Println("partial =", s)
 			if newCmd.SubCmd == nil {
-				newCmd.SubCmd = make(map[string]*Command)
+				newCmd.SubCmd = make(map[string]*CommandNode)
 			}
 
 			if newCmd.SubCmd[s] == nil {
-				newCmd.SubCmd[s] = &Command{Cmd: s}
+				newCmd.SubCmd[s] = &CommandNode{Cmd: s}
 			}
 			newCmd = newCmd.SubCmd[s]
 		}
 
-		if newCmd.CmdFn != nil {
+		if newCmd.CmdSpec.Fn != nil {
 			return nil, errors.New("duplicate command detected")
 		}
 
-		newCmd.CmdFn = c.CmdFn
+		newCmd.CmdSpec = c.Spec
 
 	}
 
@@ -57,7 +62,7 @@ func buildCommandTree() (*Command, error) {
 	return root, nil
 }
 
-func (c *Command) findSubcommand(s string) *Command {
+func (c *CommandNode) findSubcommand(s string) *CommandNode {
 	if c == nil || c.SubCmd == nil {
 		return nil
 	}
@@ -87,7 +92,7 @@ func Execute(args []string) error {
 		index++
 
 		if next == nil {
-			// did find something with that arg, so consider that it is
+			// did not find something with that arg, so consider that it is
 			// an actual argument to the command.
 			index--
 			break
@@ -97,15 +102,19 @@ func Execute(args []string) error {
 		cmd = next
 	}
 
-	if cmd == nil || cmd.CmdFn == nil {
+	if cmd == nil || cmd.CmdSpec.Fn == nil {
 		return errors.New("no such command found")
 	}
 
 	callArgs := args[index:]
 
+	if len(callArgs) != len(cmd.CmdSpec.Args) {
+		return errors.New("wrong number of arguments to command")
+	}
+
 	log.Printf("Calling fn for command %s (%v)", cmd.Cmd, callArgs)
 
-	err := cmd.CmdFn(callArgs)
+	err := cmd.CmdSpec.Fn(callArgs)
 
 	return err
 }
