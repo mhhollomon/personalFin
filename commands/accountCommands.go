@@ -6,9 +6,20 @@ import (
 	"pf/account"
 )
 
-var listAccountsSpec = CommandSpec{Fn: listAccountsCmd}
-var listAnAccountSpec = CommandSpec{Fn: listAnAccountCmd, Args: []string{"account"}}
-var addAccountSpec = CommandSpec{Fn: addAccountCmnd, Args: []string{"account"}}
+var listAccountsSpec = CommandSpec{
+	Fn:       listAccountsCmd,
+	HelpText: `List out summary info on all accounts`,
+}
+var listAnAccountSpec = CommandSpec{
+	Fn:       listAnAccountCmd,
+	Args:     []string{"account"},
+	HelpText: `Print out summary information about a single account`,
+}
+var addAccountSpec = CommandSpec{
+	Fn:       addAccountCmnd,
+	Args:     []string{"account"},
+	HelpText: `Add a new account`,
+}
 
 func listAccountsCmd([]string) error {
 	fmt.Println(account.ListAccounts())

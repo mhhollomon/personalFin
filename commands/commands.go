@@ -2,21 +2,9 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"log"
 )
-
-type CommandFunction func([]string) error
-
-type CommandSpec struct {
-	Fn   CommandFunction
-	Args []string
-}
-
-type CommandNode struct {
-	Cmd     string
-	SubCmd  map[string]*CommandNode
-	CmdSpec CommandSpec
-}
 
 type CommandLineSpec struct {
 	Spec     CommandSpec
@@ -29,17 +17,30 @@ var commands = []CommandLineSpec{
 	{Spec: addAccountSpec, Sentence: []string{"add", "account"}},
 }
 
+var commandTree *CommandNode = nil
+
 func buildCommandTree() (*CommandNode, error) {
+
+	if commandTree != nil {
+		return commandTree, nil
+	}
+
+	// Done this way to break a loop in the initialization since
+	// helpConnad references commands
+	commands = append(commands,
+		CommandLineSpec{Spec: helpCommandSpec, Sentence: []string{"help"}},
+	)
+
 	log.Println("buildCommandTree Called")
 	root := &CommandNode{Cmd: "Root"}
 
-	for i, c := range commands {
+	for _, c := range commands {
 		newCmd := root
 
-		log.Println("Building command :", i)
+		//log.Println("Building command :", i)
 
 		for _, s := range c.Sentence {
-			log.Println("partial =", s)
+			//log.Println("partial =", s)
 			if newCmd.SubCmd == nil {
 				newCmd.SubCmd = make(map[string]*CommandNode)
 			}
@@ -59,22 +60,14 @@ func buildCommandTree() (*CommandNode, error) {
 	}
 
 	log.Printf("Returning = %+v\n", *root)
+
+	commandTree = root
 	return root, nil
 }
 
-func (c *CommandNode) findSubcommand(s string) *CommandNode {
-	if c == nil || c.SubCmd == nil {
-		return nil
-	}
-
-	retval, exists := c.SubCmd[s]
-	if !exists {
-		return nil
-	}
-
-	return retval
-}
-
+// ------------------------------------------------------------
+// Find and run a command
+// ------------------------------------------------------------
 func Execute(args []string) error {
 
 	log.Println("Execute: called with args:", args)
@@ -92,7 +85,7 @@ func Execute(args []string) error {
 		index++
 
 		if next == nil {
-			// did not find something with that arg, so consider that it is
+			// did not find something with that arg, so assume that it is
 			// an actual argument to the command.
 			index--
 			break
@@ -108,13 +101,29 @@ func Execute(args []string) error {
 
 	callArgs := args[index:]
 
-	if len(callArgs) != len(cmd.CmdSpec.Args) {
-		return errors.New("wrong number of arguments to command")
+	return cmd.runCommand(callArgs)
+}
+
+//-------------------------------------
+// Help command
+//-------------------------------------
+
+var helpCommandSpec = CommandSpec{
+	Fn:       helpCommand,
+	HelpText: `Get list of command`,
+}
+
+func helpCommand([]string) error {
+
+	for _, c := range commands {
+		for _, s := range c.Sentence {
+			fmt.Print(s, " ")
+		}
+		for _, a := range c.Spec.Args {
+			fmt.Printf("<%s> ", a)
+		}
+		fmt.Print("\n")
+		fmt.Println("   ", c.Spec.HelpText)
 	}
-
-	log.Printf("Calling fn for command %s (%v)", cmd.Cmd, callArgs)
-
-	err := cmd.CmdSpec.Fn(callArgs)
-
-	return err
+	return nil
 }
