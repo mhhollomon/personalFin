@@ -2,15 +2,19 @@ package account
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 )
 
 const accountListFileName = "accountList.json"
 
+var AccountTypes = []string{"Payable", "Cash"}
+
 type Account struct {
 	Name string `json:"name"`
 	ID   int    `json:"id"`
+	Type string `json:"type"`
 }
 
 type AccountFile struct {
@@ -90,22 +94,34 @@ func GetAccount(name string) (Account, bool) {
 	return Account{}, false
 }
 
-func GetAccountById(i int) (Account, bool) {
+func GetAccountByIndex(i int) (Account, bool) {
 
 	account, exists := GetAccount(nameList[i])
 
 	return account, exists
 }
 
-func AddAccount(name string) (Account, bool) {
+func AddAccount(name string, acctType string) (Account, error) {
 
 	if _, exists := GetAccount(name); exists {
 		log.Println("proposed account already exists: ", name)
-		return Account{}, false
+		return Account{}, errors.New("proposed account already exists")
+	}
+
+	found := false
+	for _, v := range AccountTypes {
+		if v == acctType {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return Account{}, errors.New("invalid account type")
 	}
 
 	accounts.LastID++
-	newAcct := Account{name, accounts.LastID}
+	newAcct := Account{Name: name, ID: accounts.LastID, Type: acctType}
 
 	accounts.AccountList = append(accounts.AccountList, newAcct)
 	accountsChanged = true
@@ -113,5 +129,5 @@ func AddAccount(name string) (Account, bool) {
 
 	log.Printf("added account: %+v\n", newAcct)
 
-	return newAcct, true
+	return newAcct, nil
 }
