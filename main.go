@@ -2,9 +2,10 @@ package main
 
 import (
 	"log"
-	"pf/account"
 	"pf/dialogs"
+	"pf/globals"
 	"pf/layouts"
+	"pf/models"
 	"pf/widgets"
 
 	"fyne.io/fyne/v2"
@@ -15,16 +16,25 @@ import (
 
 func main() {
 	log.SetFlags(0)
-	account.LoadAccountList()
+
+	models.LoadAccountList()
+	defer models.SaveAccountList()
+
+	models.LoadBillList()
+	defer models.SaveBillList()
 
 	application := app.New()
 	mainWindow := application.NewWindow("Personal Finance")
 
 	accountList := widget.NewList(
-		func() int { return account.CountAccounts() },
-		func() fyne.CanvasObject { return widgets.NewBlankAccountSummary() },
+		func() int { return models.CountAccounts() },
+		func() fyne.CanvasObject {
+			log.Println("Returning Template Account")
+			return widgets.NewAccountSummary(mainWindow)
+		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			acct, _ := account.GetAccountByIndex(i)
+			acct, _ := models.GetAccountByIndex(i)
+			log.Printf("Setting data for index %d %+v", i, *acct)
 			l := o.(*widgets.AccountSummary)
 			l.SetName(acct.Name)
 			l.SetAmount(acct.Balance)
@@ -32,11 +42,13 @@ func main() {
 
 	acctScroll := container.NewVScroll(accountList)
 
-	addAccountButton := widget.NewButton("+ Add Account", func() { dialogs.AddAccountDialog(mainWindow, accountList) })
+	addAccountButton := widget.NewButton("+ Add Account", func() { dialogs.AddAccountDialog(mainWindow) })
 
 	mainWindow.SetContent(container.New(layouts.NewVFlex(500, 300), addAccountButton, acctScroll))
-	mainWindow.ShowAndRun()
 
-	account.SaveAccountList()
+	globals.StartUpdater(accountList)
+	defer globals.RequestClose()
+
+	mainWindow.ShowAndRun()
 
 }

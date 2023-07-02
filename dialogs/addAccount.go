@@ -3,7 +3,8 @@ package dialogs
 import (
 	"errors"
 	"log"
-	"pf/account"
+	"pf/globals"
+	"pf/models"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -14,9 +15,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func AddAccountDialog(w fyne.Window, l *widget.List) {
+func AddAccountDialog(w fyne.Window) {
 
-	t := widget.NewRadioGroup(account.AccountTypes, func(string) {})
+	t := widget.NewRadioGroup(models.AccountTypes, func(string) {})
 	t.Selected = "Payable"
 
 	s := ""
@@ -35,10 +36,13 @@ func AddAccountDialog(w fyne.Window, l *widget.List) {
 
 	dialog.ShowCustomConfirm("Add Account", "Add", "Cancel", box, func(a bool) {
 		if a {
+			if d == "" {
+				d = "0.00"
+			}
 			if dollars, str_err := strconv.ParseFloat(d, 32); str_err == nil {
 				log.Printf("Add account balance = %f\n", dollars)
-				if _, err := account.AddAccount(s, t.Selected, float32(dollars)); err == nil {
-					l.Refresh()
+				if _, err := models.AddAccount(s, t.Selected, float32(dollars)); err == nil {
+					globals.RequestUpdate()
 				} else {
 					dialog.ShowError(err, w)
 				}
