@@ -12,9 +12,10 @@ const accountListFileName = "accountList.json"
 var AccountTypes = []string{"Payable", "Cash"}
 
 type Account struct {
-	Name string `json:"name"`
-	ID   int    `json:"id"`
-	Type string `json:"type"`
+	Name    string  `json:"name"`
+	ID      int     `json:"id"`
+	Type    string  `json:"type"`
+	Balance float32 `json:"balance"`
 }
 
 type AccountFile struct {
@@ -101,7 +102,7 @@ func GetAccountByIndex(i int) (Account, bool) {
 	return account, exists
 }
 
-func AddAccount(name string, acctType string) (Account, error) {
+func AddAccount(name string, acctType string, startingBalance float32) (Account, error) {
 
 	if _, exists := GetAccount(name); exists {
 		log.Println("proposed account already exists: ", name)
@@ -121,7 +122,7 @@ func AddAccount(name string, acctType string) (Account, error) {
 	}
 
 	accounts.LastID++
-	newAcct := Account{Name: name, ID: accounts.LastID, Type: acctType}
+	newAcct := Account{Name: name, ID: accounts.LastID, Type: acctType, Balance: startingBalance}
 
 	accounts.AccountList = append(accounts.AccountList, newAcct)
 	accountsChanged = true
