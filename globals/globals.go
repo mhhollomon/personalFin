@@ -1,6 +1,10 @@
 package globals
 
-import "fyne.io/fyne/v2/widget"
+import (
+	"log"
+
+	"fyne.io/fyne/v2/widget"
+)
 
 var updateMessageChan = make(chan bool, 1)
 
@@ -17,6 +21,7 @@ func StartUpdater(l *widget.List) {
 		for {
 			msg := <-updateMessageChan
 			if msg {
+				log.Println("REfreshing")
 				l.Refresh()
 			} else {
 				break

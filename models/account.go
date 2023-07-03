@@ -18,6 +18,7 @@ type Account struct {
 	ID      uuid.UUID `json:"id"`
 	Type    string    `json:"type"`
 	Balance float32   `json:"balance"`
+	DueDay  int       `json:"due_day"`
 }
 
 var accountsChanged = false
@@ -95,6 +96,16 @@ func (a *Account) updateBalance(delta float32) {
 	accountsChanged = true
 }
 
+func (a *Account) SetName(n string) {
+	a.Name = n
+	accountsChanged = true
+}
+
+func (a *Account) SetDueDay(d int) {
+	a.DueDay = d
+	accountsChanged = true
+}
+
 func AddAccount(name string, acctType string, startingBalance float32) (Account, error) {
 
 	if acct := GetAccountByName(name); acct != nil {
@@ -114,7 +125,7 @@ func AddAccount(name string, acctType string, startingBalance float32) (Account,
 		return Account{}, errors.New("invalid account type")
 	}
 
-	newAcct := &Account{Name: name, ID: uuid.New(), Type: acctType, Balance: startingBalance}
+	newAcct := &Account{Name: name, ID: uuid.New(), Type: acctType, Balance: startingBalance, DueDay: 1}
 
 	accountList = append(accountList, newAcct)
 	accountsChanged = true

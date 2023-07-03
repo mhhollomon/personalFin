@@ -14,20 +14,31 @@ const billListFileName = "billList.json"
 var billsChanged = false
 
 type Bill struct {
-	AccountID uuid.UUID `json:"acct_id"`
-	Amount    float32   `json:"amount"`
-	DueDate   time.Time `json:"date"`
-	ID        uuid.UUID `json:"uuid"`
+	AccountID  uuid.UUID `json:"acct_id"`
+	OrigAmount float32   `json:"orig_amt"`
+	Amount     float32   `json:"amount"`
+	DueDate    time.Time `json:"date"`
+	ID         uuid.UUID `json:"uuid"`
 }
 
 var billList = make([]*Bill, 0)
 
+func (b *Bill) Pay(amount float32, _ time.Time) {
+
+	b.Amount -= amount
+	GetAccountById(b.AccountID).updateBalance(-amount)
+
+	billsChanged = true
+
+}
+
 func NewBill(acct uuid.UUID, amount float32, due time.Time) *Bill {
 	b := &Bill{
-		AccountID: acct,
-		Amount:    amount,
-		DueDate:   due,
-		ID:        uuid.New(),
+		AccountID:  acct,
+		OrigAmount: amount,
+		Amount:     amount,
+		DueDate:    due,
+		ID:         uuid.New(),
 	}
 
 	billList = append(billList, b)
@@ -37,6 +48,30 @@ func NewBill(acct uuid.UUID, amount float32, due time.Time) *Bill {
 	billsChanged = true
 
 	return b
+}
+
+func FindBillsForAcct(acct uuid.UUID) []*Bill {
+	retval := make([]*Bill, 0, 10)
+	for _, b := range billList {
+		if b.AccountID == acct && b.Amount > 0 {
+			retval = append(retval, b)
+		}
+	}
+	return retval
+}
+
+func FindEarliestBillForAcct(acct uuid.UUID) *Bill {
+	var retval *Bill
+
+	for _, b := range billList {
+		if b.AccountID == acct && b.Amount > 0 {
+			if retval == nil || retval.DueDate.After(b.DueDate) {
+				retval = b
+			}
+		}
+	}
+
+	return retval
 }
 
 func LoadBillList() error {

@@ -15,10 +15,32 @@ import (
 	"github.com/google/uuid"
 )
 
+func calcDueDate(id uuid.UUID) string {
+
+	acctObj := models.GetAccountById(id)
+
+	defaultDay := acctObj.DueDay
+
+	due := time.Now()
+
+	month := due.Month()
+
+	if defaultDay < due.Day() {
+		month += 1
+	}
+
+	due = time.Date(due.Year(), month, defaultDay, 0, 0, 0, 0, time.UTC)
+
+	return due.Format("2006-01-02")
+
+}
+
 func AddBillDialog(acct uuid.UUID, w fyne.Window) {
 
 	amountEntry := widget.NewEntry()
 	dateEntry := widget.NewEntry()
+
+	dateEntry.SetText(calcDueDate(acct))
 
 	box := container.New(layout.NewFormLayout(),
 		widget.NewLabel("Amount"), amountEntry,

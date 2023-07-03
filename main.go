@@ -35,9 +35,18 @@ func main() {
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			acct, _ := models.GetAccountByIndex(i)
 			log.Printf("Setting data for index %d %+v", i, *acct)
-			l := o.(*widgets.AccountSummary)
-			l.SetName(acct.Name)
-			l.SetAmount(acct.Balance)
+			acctSum := o.(*widgets.AccountSummary)
+			acctSum.SetName(acct.Name)
+			acctSum.SetAmount(acct.Balance)
+
+			bill := models.FindEarliestBillForAcct(acct.ID)
+			if bill != nil {
+				log.Printf("A bill is due")
+				acctSum.SetDueDate(bill.DueDate.Format("2006-01-02"))
+			} else {
+				log.Printf("A bill is Not due")
+				acctSum.SetDueDate("  ")
+			}
 		})
 
 	acctScroll := container.NewVScroll(accountList)
