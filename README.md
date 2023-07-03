@@ -3,4 +3,8 @@
 
  Small "Personal Finance" app to help with tracking bills.
 
- Can't do much yet but add accounts.
+You can :
+ - Add accounts.
+ - Update account properties
+ - Add bills to accounts
+ - Pay bills
