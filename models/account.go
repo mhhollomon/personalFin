@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"pf/globals"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +27,7 @@ var accountsChanged = false
 var accountList = make([]*Account, 0)
 
 func LoadAccountList() error {
-	file, ferr := os.Open(accountListFileName)
+	file, ferr := os.Open(globals.DataDir + accountListFileName)
 	if ferr != nil {
 		return ferr
 	}
@@ -48,7 +49,7 @@ func SaveAccountList() error {
 
 	log.Println("Writing account file because of changes")
 
-	file, ferr := os.Create(accountListFileName)
+	file, ferr := os.Create(globals.DataDir + accountListFileName)
 	if ferr != nil {
 		return ferr
 	}

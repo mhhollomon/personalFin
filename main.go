@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"pf/dialogs"
 	"pf/globals"
 	"pf/layouts"
@@ -14,8 +15,23 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+func setDataDir(dir string) {
+
+	last_char := dir[len(dir)-1]
+
+	if last_char != '/' && last_char != '\\' {
+		dir = dir + "/"
+	}
+
+	globals.DataDir = dir
+}
+
 func main() {
 	log.SetFlags(0)
+
+	if len(os.Args) > 1 {
+		setDataDir(os.Args[1])
+	}
 
 	models.LoadAccountList()
 	defer models.SaveAccountList()

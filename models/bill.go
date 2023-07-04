@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"pf/globals"
 	"time"
 
 	"github.com/google/uuid"
@@ -76,7 +77,7 @@ func FindEarliestBillForAcct(acct uuid.UUID) *Bill {
 
 func LoadBillList() error {
 
-	file, ferr := os.Open(billListFileName)
+	file, ferr := os.Open(globals.DataDir + billListFileName)
 	if ferr != nil {
 		return ferr
 	}
@@ -98,7 +99,7 @@ func SaveBillList() error {
 
 	log.Println("Writing bill file because of changes")
 
-	file, ferr := os.Create(billListFileName)
+	file, ferr := os.Create(globals.DataDir + billListFileName)
 	if ferr != nil {
 		return ferr
 	}

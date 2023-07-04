@@ -8,6 +8,8 @@ import (
 
 var updateMessageChan = make(chan bool, 1)
 
+var DataDir = "./"
+
 func RequestUpdate() {
 	updateMessageChan <- true
 }
